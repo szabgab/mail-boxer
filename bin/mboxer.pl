@@ -37,7 +37,7 @@ while ( my $file = $it->() ) {
 		}
 		my @from = Email::Address->parse($from_string);
 		if (@from > 1) {
-			warn "Stranage, there were more than one emails recognized in the From field: " . $msg->header('From');
+			warn "Strange, there were more than one emails recognized in the From field: " . $msg->header('From');
 		}
 		if (not @from) {
 			warn "Very strange. No email in the From field! " . $msg->header('From');
