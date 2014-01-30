@@ -12,8 +12,8 @@ my $path_to_dir = shift or die "Usage: $0 path/to/mail\n";
 
 my $client     = MongoDB::MongoClient->new(host => 'localhost', port => 27017);
 my $database   = $client->get_database( 'mboxer' );
+$database->drop;
 my $collection = $database->get_collection( 'messages' );
-#$collection->remove;
 
 
 
@@ -55,7 +55,8 @@ while ( my $file = $it->() ) {
 			From => {
 				name => $from[0]->name,
 				address => $from[0]->address,
-			}
+			},
+			Subject => $msg->header('Subject'),
 		);
 		$collection->insert(\%doc);
 		exit if $count > 20;
