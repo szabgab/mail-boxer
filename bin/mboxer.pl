@@ -11,7 +11,7 @@ use Data::Dumper qw(Dumper);
 my $path_to_dir = shift or die "Usage: $0 path/to/mail\n";
 
 my $client     = MongoDB::MongoClient->new(host => 'localhost', port => 27017);
-my $database   = $client->get_database( 'mboxer');
+my $database   = $client->get_database( 'mboxer' );
 my $collection = $database->get_collection( 'messages' );
 #$collection->remove;
 
@@ -30,7 +30,12 @@ while ( my $file = $it->() ) {
 		#say $msg->header;
 		# Use of uninitialized value $field in lc at .../5.18.1/Email/Simple/Header.pm line 123, <GEN0> line 14.
 		#say $msg->header('From');
-		my @from = Email::Address->parse($msg->header('From'));
+		my $from_string = $msg->header('From');
+        if (not defined $from_string) {
+			warn "There is no From field in this message";
+			next;
+		}
+		my @from = Email::Address->parse($from_string);
 		if (@from > 1) {
 			warn "Stranage, there were more than one emails recognized in the From field: " . $msg->header('From');
 		}
@@ -46,7 +51,7 @@ while ( my $file = $it->() ) {
 		}
 		#exit;
 		my %doc = (
-			file => $file,
+			#file => $file,
 			From => {
 				name => $from[0]->name,
 				address => $from[0]->address,
