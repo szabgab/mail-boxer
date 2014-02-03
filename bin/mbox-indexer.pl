@@ -30,34 +30,12 @@ while ( my $file = $it->() ) {
 		#say $msg->header;
 		# Use of uninitialized value $field in lc at .../5.18.1/Email/Simple/Header.pm line 123, <GEN0> line 14.
 		#say $msg->header('From');
-		my $from_string = $msg->header('From');
-        if (not defined $from_string) {
-			warn "There is no From field in this message";
-			next;
-		}
-		my @from = Email::Address->parse($from_string);
-		if (@from > 1) {
-			warn "Strange, there were more than one emails recognized in the From field: " . $msg->header('From');
-		}
-		if (not @from) {
-			warn "Very strange. No email in the From field! " . $msg->header('From');
-			next;
-		}
-		#say Dumper \@from;
-		say $from[0]->address;
-		say $from[0]->name;
-		if ($from[0]->name eq 'Mail System Internal Data') {
-			next;
-		}
-		#exit;
-		my %doc = (
-			#file => $file,
-			From => {
-				name => $from[0]->name,
-				address => $from[0]->address,
-			},
-			Subject => $msg->header('Subject'),
-		);
+		my %doc;
+
+		add_from(\%doc, $msg) or next;
+
+		#file => $file,
+		$doc{Subject} = $msg->header('Subject'),
 		$collection->insert(\%doc);
 		exit if $count > 20;
 	}
@@ -66,5 +44,34 @@ while ( my $file = $it->() ) {
 }
 say $count;
 
+
+sub add_from {
+	my ($doc, $msg) = @_;
+
+	my $from_string = $msg->header('From');
+	if (not defined $from_string) {
+		warn "There is no From field in this message";
+		return 1;
+	}
+	my @from = Email::Address->parse($from_string);
+	if (@from > 1) {
+		warn "Strange, there were more than one emails recognized in the From field: " . $msg->header('From');
+	}
+	if (not @from) {
+		warn "Very strange. No email in the From field! " . $msg->header('From');
+		return 1;
+	}
+	#say Dumper \@from;
+	say $from[0]->address;
+	say $from[0]->name;
+	if ($from[0]->name eq 'Mail System Internal Data') {
+		return;
+	}
+	$doc->{From} = {
+		name => $from[0]->name,
+		address => $from[0]->address,
+	};
+	return 1;
+}
 
 
