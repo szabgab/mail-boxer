@@ -80,10 +80,13 @@ sub add_to {
 	$log->info('phrase: ' . ($to[0]->phrase // ''));
 	$log->info('address: ' . $to[0]->address);
 
-	$doc->{To} = [ map { {
-		name    => $_->phrase,
-		address => lc $_->address,
-	} } @to ];
+	foreach my $t (@to) {
+		my %h = (address => lc $t->address);
+		if (defined $t->phrase and $t->phrase ne $t->address) {
+			$h{name} = $t->phrase;
+		}
+		push @{ $doc->{To} }, \%h;
+	}
 
 	return;
 }
@@ -114,10 +117,15 @@ sub add_from {
 	if ($from[0]->name eq 'Mail System Internal Data') {
 		return;
 	}
+
 	$doc->{From} = {
-		name    => $from[0]->phrase,
 		address => lc $from[0]->address,
 	};
+
+	if (defined $from[0]->phrase and $from[0]->phrase ne $from[0]->address) {
+		$doc->{From}{name} = $from[0]->phrase;
+	}
+
 	return 1;
 }
 
