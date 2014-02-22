@@ -80,8 +80,8 @@ sub add_to {
 	$log->info('address: ' . $to[0]->address);
 
 	$doc->{To} = [ map { {
-		name => $to[0]->name,
-		address => $to[0]->address,
+		name    => $_->name,
+		address => lc $_->address,
 	} } @to ];
 
 	return;
@@ -114,8 +114,8 @@ sub add_from {
 		return;
 	}
 	$doc->{From} = {
-		name => $from[0]->name,
-		address => $from[0]->address,
+		name    => $from[0]->name,
+		address => lc $from[0]->address,
 	};
 	return 1;
 }
