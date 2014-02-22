@@ -77,10 +77,11 @@ sub add_to {
 	}
 	my @to = Email::Address->parse($to_string);
 	$log->info('name: ' . $to[0]->name);
+	$log->info('phrase: ' . ($to[0]->phrase // ''));
 	$log->info('address: ' . $to[0]->address);
 
 	$doc->{To} = [ map { {
-		name    => $_->name,
+		name    => $_->phrase,
 		address => lc $_->address,
 	} } @to ];
 
@@ -114,7 +115,7 @@ sub add_from {
 		return;
 	}
 	$doc->{From} = {
-		name    => $from[0]->name,
+		name    => $from[0]->phrase,
 		address => lc $from[0]->address,
 	};
 	return 1;
