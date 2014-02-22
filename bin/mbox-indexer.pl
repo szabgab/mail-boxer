@@ -2,6 +2,9 @@ use strict;
 use warnings;
 use 5.010;
 
+use Moo;
+use MooX::Options;
+
 use Path::Iterator::Rule;
 use Email::Folder;
 use Email::Address;
@@ -13,12 +16,11 @@ my $path_to_dir = shift or die "Usage: $0 path/to/mail\n";
 
 Log::Log4perl->init("log.conf");
 
-process($path_to_dir);
+main->new_with_options->process($path_to_dir);
 exit;
 
-
 sub process {
-	my ($dir) = @_;
+	my ($self, $dir) = @_;
 
 	my $log = Log::Log4perl->get_logger('process');
 	$log->info("Starting to process in '$dir'");
