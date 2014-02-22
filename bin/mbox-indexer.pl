@@ -70,12 +70,18 @@ sub add_to {
 
 	my $log = Log::Log4perl->get_logger('add_to');
 	my $to_string = $msg->header('To');
-	$log->info("To: $to_string");
 	if (not defined $to_string) {
 		$log->warn("There is no To field in this message");
 		return;
 	}
+	$log->info("To: $to_string");
+
 	my @to = Email::Address->parse($to_string);
+	if (not @to) {
+		$log->warn("Very strange. No email recognized in the To field! " . $msg->header('To'));
+		return;
+	}
+
 	$log->info('name: ' . $to[0]->name);
 	$log->info('phrase: ' . ($to[0]->phrase // ''));
 	$log->info('address: ' . $to[0]->address);
