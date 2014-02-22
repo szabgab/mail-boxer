@@ -54,9 +54,11 @@ sub process {
 	
 			add_from(\%doc, $msg) or next;
 			add_to(\%doc, $msg);
+			add_cc(\%doc, $msg);
 			add_date(\%doc, $msg);
 
 			$doc{size} = length $msg->as_string;
+			#$doc{body} = $msg->body; # we should fetch the text part of it.
 
 			#'Delivery-date' is like Date, but it is not a requiref field, so no need to warn about it if it is missing
 			#file => $file,
@@ -96,6 +98,35 @@ sub add_date {
 	return;
 }
 
+# TODO path to file, message-id
+sub add_cc {
+	my ($doc, $msg) = @_;
+
+	my %seen;
+	my $log = Log::Log4perl->get_logger('add_cc');
+	foreach my $field ('CC', 'Cc') {
+		my $cc_string = $msg->header($field);
+		next if not defined $cc_string;
+		$log->info("$field: $cc_string");
+		my @cc = Email::Address->parse($cc_string);
+		if (not @cc) {
+			$log->warn("Email no recognized in the $field field! '$cc_string'");
+			return;
+		}
+
+		foreach my $t (@cc) {
+			next if $seen{lc $t->address}++;
+			my %h = (address => lc $t->address);
+			if (defined $t->phrase and $t->phrase ne $t->address) {
+				$h{name} = $t->phrase;
+			}
+			push @{ $doc->{CC} }, \%h;
+		}
+	}
+
+	return;
+}
+
 sub add_to {
 	my ($doc, $msg) = @_;
 
@@ -109,7 +140,7 @@ sub add_to {
 
 	my @to = Email::Address->parse($to_string);
 	if (not @to) {
-		$log->warn("Very strange. No email recognized in the To field! " . $msg->header('To'));
+		$log->warn("Very strange. No email recognized in the To field! $to_string");
 		return;
 	}
 
