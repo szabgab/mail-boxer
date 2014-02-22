@@ -15,6 +15,9 @@ use Log::Log4perl;
 option path    => (is => 'ro', required => 1, format => 's',
 	doc => 'path/to/mail');
 
+option limit   => (is => 'ro', required => 0, format => 'i',
+	doc => 'limit number of messages to be processed');
+
 Log::Log4perl->init("log.conf");
 
 main->new_with_options->process();
@@ -32,8 +35,6 @@ sub process {
 	my $database   = $client->get_database( 'mboxer' );
 	$database->drop;
 	my $collection = $database->get_collection( 'messages' );
-	
-	
 	
 	my $count = 0;
 	
@@ -55,7 +56,7 @@ sub process {
 			#file => $file,
 			$doc{Subject} = $msg->header('Subject'),
 			$collection->insert(\%doc);
-			exit if $count > 20;
+			exit if defined $self->limit and $count > $self->limit;
 		}
 		#last;
 		#exit;
