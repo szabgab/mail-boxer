@@ -12,15 +12,18 @@ use MongoDB;
 use Data::Dumper qw(Dumper);
 use Log::Log4perl;
 
-my $path_to_dir = shift or die "Usage: $0 path/to/mail\n";
+option path    => (is => 'ro', required => 1, format => 's',
+	doc => 'path/to/mail');
 
 Log::Log4perl->init("log.conf");
 
-main->new_with_options->process($path_to_dir);
+main->new_with_options->process();
 exit;
 
 sub process {
-	my ($self, $dir) = @_;
+	my ($self) = @_;
+
+	my $dir = $self->path;
 
 	my $log = Log::Log4perl->get_logger('process');
 	$log->info("Starting to process in '$dir'");
