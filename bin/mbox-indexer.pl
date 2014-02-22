@@ -52,6 +52,7 @@ sub process {
 			my %doc;
 	
 			add_from(\%doc, $msg) or next;
+			add_to(\%doc, $msg);
 	
 			#file => $file,
 			$doc{Subject} = $msg->header('Subject'),
@@ -64,6 +65,27 @@ sub process {
 	$log->info("Count: $count");
 }
 
+sub add_to {
+	my ($doc, $msg) = @_;
+
+	my $log = Log::Log4perl->get_logger('add_to');
+	my $to_string = $msg->header('To');
+	$log->info("To: $to_string");
+	if (not defined $to_string) {
+		$log->warn("There is no To field in this message");
+		return;
+	}
+	my @to = Email::Address->parse($to_string);
+	$log->info('name: ' . $to[0]->name);
+	$log->info('address: ' . $to[0]->address);
+
+	$doc->{To} = [ map { {
+		name => $to[0]->name,
+		address => $to[0]->address,
+	} } @to ];
+
+	return;
+}
 
 sub add_from {
 	my ($doc, $msg) = @_;
@@ -71,11 +93,13 @@ sub add_from {
 	my $log = Log::Log4perl->get_logger('add_from');
 
 	my $from_string = $msg->header('From');
+	#$log->info("From: $from_string");
 	if (not defined $from_string) {
 		$log->warn("There is no From field in this message");
 		return 1;
 	}
 	my @from = Email::Address->parse($from_string);
+	#$log->info(Dumper \@from);
 	if (@from > 1) {
 		$log->warn("Strange, there were more than one emails recognized in the From field: " . $msg->header('From'));
 	}
