@@ -10,6 +10,7 @@ use Email::Folder;
 use Email::Address;
 use MongoDB;
 use Data::Dumper qw(Dumper);
+use DateTime::Format::Mail;
 use Log::Log4perl;
 
 option path    => (is => 'ro', required => 1, format => 's',
@@ -53,6 +54,7 @@ sub process {
 	
 			add_from(\%doc, $msg) or next;
 			add_to(\%doc, $msg);
+			add_date(\%doc, $msg);
 	
 			#file => $file,
 			$doc{Subject} = $msg->header('Subject'),
@@ -63,6 +65,32 @@ sub process {
 		#exit;
 	}
 	$log->info("Count: $count");
+}
+
+sub add_date {
+	my ($doc, $msg) = @_;
+
+	my $log = Log::Log4perl->get_logger('add_date');
+	my $date_string = $msg->header('Date');
+	if (not defined $date_string) {
+		$log->warn("There is no Date field in this message");
+		return;
+	}
+	$log->info("Date: $date_string");
+	$doc->{Date} = $date_string;
+
+	$date_string =~ s/\s*\([A-Z]+\)\s*$//; # TODO process timezones as well!
+
+	eval {
+		my $dt = DateTime::Format::Mail->parse_datetime($date_string);
+		$doc->{Date} = $dt;
+	};
+	if ($@) {
+		chomp(my $err = $@);
+		$log->warn("Date field could not be parsed ($err) '$date_string'");
+	}
+
+	return;
 }
 
 sub add_to {
@@ -82,9 +110,9 @@ sub add_to {
 		return;
 	}
 
-	$log->info('name: ' . $to[0]->name);
-	$log->info('phrase: ' . ($to[0]->phrase // ''));
-	$log->info('address: ' . $to[0]->address);
+	#$log->info('name: ' . $to[0]->name);
+	#$log->info('phrase: ' . ($to[0]->phrase // ''));
+	#$log->info('address: ' . $to[0]->address);
 
 	foreach my $t (@to) {
 		my %h = (address => lc $t->address);
@@ -117,9 +145,7 @@ sub add_from {
 		$log->warn("Very strange. No email in the From field! " . $msg->header('From'));
 		return 1;
 	}
-	#say Dumper \@from;
-	#say $from[0]->address;
-	#say $from[0]->name;
+
 	if ($from[0]->name eq 'Mail System Internal Data') {
 		return;
 	}
