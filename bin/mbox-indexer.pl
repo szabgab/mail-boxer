@@ -55,7 +55,10 @@ sub process {
 			add_from(\%doc, $msg) or next;
 			add_to(\%doc, $msg);
 			add_date(\%doc, $msg);
-	
+
+			$doc{size} = length $msg->as_string;
+
+			#'Delivery-date' is like Date, but it is not a requiref field, so no need to warn about it if it is missing
 			#file => $file,
 			$doc{Subject} = $msg->header('Subject'),
 			$collection->insert(\%doc);
