@@ -61,7 +61,7 @@ sub process {
 			#$doc{body} = $msg->body; # we should fetch the text part of it.
 
 			#'Delivery-date' is like Date, but it is not a requiref field, so no need to warn about it if it is missing
-			#file => $file,
+			$doc{file} = $file;
 			$doc{Subject} = $msg->header('Subject'),
 			$collection->insert(\%doc);
 			exit if defined $self->limit and $count > $self->limit;
@@ -98,7 +98,6 @@ sub add_date {
 	return;
 }
 
-# TODO path to file, message-id
 sub add_cc {
 	my ($doc, $msg) = @_;
 
