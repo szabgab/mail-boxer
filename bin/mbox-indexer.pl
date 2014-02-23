@@ -56,6 +56,7 @@ sub process {
 			add_to(\%doc, $msg);
 			add_cc(\%doc, $msg);
 			add_date(\%doc, $msg);
+			add_message_id(\%doc, $msg);
 
 			$doc{size} = length $msg->as_string;
 			#$doc{body} = $msg->body; # we should fetch the text part of it.
@@ -71,6 +72,34 @@ sub process {
 	}
 	$log->info("Count: $count");
 }
+
+sub add_message_id {
+	my ($doc, $msg) = @_;
+
+	my $log = Log::Log4perl->get_logger('add_message_id');
+	my $id = $msg->header('Message-ID');
+	if (not $id) {
+		$id = $msg->header('Message-Id');
+		if ($id) {
+			$log->info("Message-Id found");
+		}
+	}
+	if (not $id) {
+		$id = $msg->header('Message-id');
+		if ($id) {
+			$log->info("Message-id found");
+		}
+	}
+
+	if (not $id) {
+		$log->warn("There is no Message id in this message");
+		return;
+	}
+	$log->info("Message-ID: $id");
+
+	return;
+}
+
 
 sub add_date {
 	my ($doc, $msg) = @_;
